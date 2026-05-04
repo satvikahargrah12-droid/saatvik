@@ -50,7 +50,7 @@ export default function Contact() {
     {
       icon: MessageSquare,
       title: "WhatsApp",
-      content: settings?.contact_number || "+91 98765 43210",
+      content: settings?.contact_number || "+91 8690857887",
       sub: "Quick replies on WhatsApp",
       link: `https://wa.me/918690857887`,
       linkLabel: "Chat Now",

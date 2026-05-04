@@ -52,10 +52,10 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 export function Footer() {
   const { data: settings } = useGetSettings();
   const footerRef = useRef<HTMLElement | null>(null);
-  const phoneDisplay = settings?.contact_number?.trim() || "+91 9186908 57887";
+  const phoneDisplay = settings?.contact_number?.trim() || "+91 86908 57887";
   const waDigits = digitsOnly(phoneDisplay);
-  const waHref = waDigits ? `https://wa.me/${waDigits.startsWith("91") ? waDigits : `91${waDigits}`}` : "https://wa.me/8690857887";
-  const telHref = `tel:${digitsOnly(phoneDisplay) || "8690857887"}`;
+  const waHref = waDigits ? `https://wa.me/${waDigits.startsWith("91") ? waDigits : `91${waDigits}`}` : "https://wa.me/918690857887";
+  const telHref = `tel:${digitsOnly(phoneDisplay) || "918690857887"}`;
   const cutoff = formatCutoffTime(settings?.order_cutoff_time);
   useEffect(() => {
     if (!footerRef.current) return;

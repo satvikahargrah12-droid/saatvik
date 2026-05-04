@@ -250,7 +250,7 @@ export default function Home() {
             </div>
             <div className="rounded-2xl overflow-hidden scroll-anim from-right" style={{ transitionDelay: "100ms" }} data-animate-on-scroll>
               <img
-                src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&q=80"
+                src="https://in.pinterest.com/pin/593560425928692518/"
                 alt="Jain thali"
                 className="w-full h-80 object-cover"
                 data-testid="img-thali"

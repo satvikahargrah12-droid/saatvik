@@ -315,19 +315,19 @@ export default function Home() {
             {[
               {
                 name: "Priyanka Shah",
-                area: "Vastrapur",
+                area: "Sector-10, Kharghar",
                 review:
                   "Food quality is consistently excellent. Taste feels like home, and I never worry about Jain restrictions.",
               },
               {
                 name: "Nirav Mehta",
-                area: "Bodakdev",
+                area: "Sector-14, Kharghar",
                 review:
                   "Very punctual delivery and perfectly packed meals. Their weekly menu variety is great for office lunch.",
               },
               {
                 name: "Riddhi Jain",
-                area: "Satellite",
+                area: "Sector-20, Kharghar",
                 review:
                   "Best option for pure Jain food in our area. Fresh, light, and hygienic — our family trusts them fully.",
               },

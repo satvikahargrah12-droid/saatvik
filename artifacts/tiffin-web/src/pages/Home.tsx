@@ -250,7 +250,7 @@ export default function Home() {
             </div>
             <div className="rounded-2xl overflow-hidden scroll-anim from-right" style={{ transitionDelay: "100ms" }} data-animate-on-scroll>
               <img
-                src="https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=600&q=80"
+                src="https://i.pinimg.com/1200x/b8/6c/1d/b86c1d5a29cb14daf8c8a53f159ab358.jpg"
                 alt="Jain thali"
                 className="w-full h-80 object-cover"
                 data-testid="img-thali"
@@ -315,19 +315,19 @@ export default function Home() {
             {[
               {
                 name: "Priyanka Shah",
-                area: "Vastrapur",
+                area: "Sector-10, Kharghar",
                 review:
                   "Food quality is consistently excellent. Taste feels like home, and I never worry about Jain restrictions.",
               },
               {
                 name: "Nirav Mehta",
-                area: "Bodakdev",
+                area: "Sector-14, Kharghar",
                 review:
                   "Very punctual delivery and perfectly packed meals. Their weekly menu variety is great for office lunch.",
               },
               {
                 name: "Riddhi Jain",
-                area: "Satellite",
+                area: "Sector-20, Kharghar",
                 review:
                   "Best option for pure Jain food in our area. Fresh, light, and hygienic — our family trusts them fully.",
               },

@@ -50,7 +50,7 @@ export default function Contact() {
     {
       icon: MessageSquare,
       title: "WhatsApp",
-      content: settings?.contact_number || "+91 98765 43210",
+      content: settings?.contact_number || "+91 8690857887",
       sub: "Quick replies on WhatsApp",
       link: `https://wa.me/918690857887`,
       linkLabel: "Chat Now",
@@ -151,7 +151,7 @@ export default function Contact() {
                          <Phone className="w-5 h-5 text-orange-600" />
                       </div>
                       <div>
-                         <p className="font-medium text-foreground">{settings?.contact_number || "+91 98765 43210"}</p>
+                         <p className="font-medium text-foreground">{settings?.contact_number || "+91 86908 57887"}</p>
                          <p className="text-sm text-muted-foreground">Mon - Sun, 9 AM - 6:30 PM</p>
                       </div>
                    </div>

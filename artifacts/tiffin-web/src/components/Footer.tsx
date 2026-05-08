@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/BrandLogo";
 import { useGetSettings } from "@workspace/api-client-react";
 
-const ADDRESS = "12, Panchvati Society, Vastrapur, Ahmedabad — 380 015";
+const ADDRESS = "Jain Bhavan, Sector-12, Kharghar, Navi Mumbai";
 
 const QUICK_LINKS = [
   { to: "/", label: "Home" },
@@ -52,10 +52,10 @@ function WhatsAppGlyph({ className }: { className?: string }) {
 export function Footer() {
   const { data: settings } = useGetSettings();
   const footerRef = useRef<HTMLElement | null>(null);
-  const phoneDisplay = settings?.contact_number?.trim() || "+91 98765 43210";
+  const phoneDisplay = settings?.contact_number?.trim() || "+91 86908 57887";
   const waDigits = digitsOnly(phoneDisplay);
-  const waHref = waDigits ? `https://wa.me/${waDigits.startsWith("91") ? waDigits : `91${waDigits}`}` : "https://wa.me/919876543210";
-  const telHref = `tel:${digitsOnly(phoneDisplay) || "919876543210"}`;
+  const waHref = waDigits ? `https://wa.me/${waDigits.startsWith("91") ? waDigits : `91${waDigits}`}` : "https://wa.me/918690857887";
+  const telHref = `tel:${digitsOnly(phoneDisplay) || "918690857887"}`;
   const cutoff = formatCutoffTime(settings?.order_cutoff_time);
   useEffect(() => {
     if (!footerRef.current) return;

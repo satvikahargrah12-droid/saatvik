@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { AdminLayout } from "@/components/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,103 @@ function todayIsoDate() {
 function formatMenuDateLabel(value: string) {
   const d = new Date(`${value}T00:00:00`);
   return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+}
+
+const WHATSAPP_PREFILL_MAX_CHARS = 9500;
+
+function orderSiteBase(): string {
+  const fromEnv = (import.meta.env.VITE_PUBLIC_SITE_URL as string | undefined)?.trim().replace(/\/+$/, "");
+  if (fromEnv) return fromEnv;
+  return typeof window !== "undefined" ? window.location.origin : "";
+}
+
+function publicMenuOrderUrl(menuDate: string): string {
+  return `${orderSiteBase()}/menu   `;
+}
+
+type WhatsAppShareItem = {
+  name: string;
+  description?: string | null;
+  price: string;
+  category_name?: string | null;
+  status?: number;
+  is_special?: boolean;
+};
+
+function normalizeShareDescription(raw: string | null | undefined): string {
+  if (!raw?.trim()) return "";
+  return raw.replace(/\s+/g, " ").trim();
+}
+
+function truncateText(s: string, max: number): string {
+  if (s.length <= max) return s;
+  return `${s.slice(0, Math.max(0, max - 1)).trimEnd()}…`;
+}
+
+function formatItemBlockForWhatsApp(p: WhatsAppShareItem, opts: { noteInactive?: boolean }): string {
+  const cat = p.category_name ? ` (${p.category_name})` : "";
+  let line = `• ${p.name}${cat} — ₹${p.price}`;
+  if (p.is_special) line += " ⭐";
+  if (opts.noteInactive && p.status === 0) line += " [Inactive]";
+  const desc = normalizeShareDescription(p.description);
+  if (desc) line += `\n  ${desc}`;
+  return line;
+}
+
+function buildMenuWhatsAppText(menuDate: string, items: WhatsAppShareItem[]): string {
+  const header = `🍽 Full menu — ${formatMenuDateLabel(menuDate)}\n\n`;
+  const orderUrl = publicMenuOrderUrl(menuDate);
+  const footer = `\n\nOrder here:\n${orderUrl}`;
+
+  let body = items.map((p) => formatItemBlockForWhatsApp(p, { noteInactive: true })).join("\n\n");
+  let total = header.length + body.length + footer.length;
+  if (total <= WHATSAPP_PREFILL_MAX_CHARS) return header + body + footer;
+
+  for (const cap of [120, 80, 50, 0]) {
+    const nextBlocks = items.map((p) => {
+      if (cap === 0) return formatItemBlockForWhatsApp({ ...p, description: null }, { noteInactive: true });
+      const d = normalizeShareDescription(p.description);
+      const shortened = d ? truncateText(d, cap) : "";
+      return formatItemBlockForWhatsApp({ ...p, description: shortened || null }, { noteInactive: true });
+    });
+    body = nextBlocks.join("\n\n");
+    total = header.length + body.length + footer.length;
+    if (total <= WHATSAPP_PREFILL_MAX_CHARS) return header + body + footer;
+  }
+
+  const budget = WHATSAPP_PREFILL_MAX_CHARS - header.length - footer.length - 4;
+  body = body.slice(0, Math.max(0, budget)).trimEnd() + "\n…";
+  return header + body + footer;
+}
+
+function buildSingleItemWhatsAppText(menuDate: string, p: WhatsAppShareItem): string {
+  const cat = p.category_name ? `\nCategory: ${p.category_name}` : "";
+  const priceLine = `Price: ₹${p.price}`;
+  const dateLine = `Menu day: ${formatMenuDateLabel(menuDate)}`;
+  const flags = [
+    p.is_special ? "⭐ Today's special" : "",
+    p.status === 0 ? "Note: marked inactive in admin (may not show on site)." : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const desc = normalizeShareDescription(p.description);
+  const descBlock = desc ? `\n\n${desc}` : "";
+  const order = `\n\nOrder here:\n${publicMenuOrderUrl(menuDate)}`;
+
+  let text = `🍽 ${p.name}${cat}\n${priceLine}\n${dateLine}`;
+  if (flags) text += `\n${flags}`;
+  text += descBlock + order;
+
+  if (text.length <= WHATSAPP_PREFILL_MAX_CHARS) return text;
+  const head = `🍽 ${p.name}${cat}\n${priceLine}\n${dateLine}${flags ? `\n${flags}` : ""}\n\n`;
+  const tail = order;
+  const descBudget = Math.max(0, WHATSAPP_PREFILL_MAX_CHARS - head.length - tail.length - 2);
+  const shortDesc = desc && descBudget > 0 ? truncateText(desc, Math.max(1, descBudget)) : "";
+  return `${head}${shortDesc}${tail}`;
+}
+
+function openWhatsAppPrefill(text: string) {
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer");
 }
 
 const productSchema = z.object({
@@ -106,6 +204,25 @@ export default function MenuManagement() {
     }
   };
 
+  const handleShareFullMenuWhatsApp = () => {
+    const list = products ?? [];
+    if (list.length === 0) {
+      toast({
+        title: "Nothing to share",
+        description: "Add menu items for this date first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    const text = buildMenuWhatsAppText(selectedMenuDate, list);
+    openWhatsAppPrefill(text);
+  };
+
+  const handleShareItemWhatsApp = (product: WhatsAppShareItem & { id: number }) => {
+    const text = buildSingleItemWhatsAppText(selectedMenuDate, product);
+    openWhatsAppPrefill(text);
+  };
+
   return (
     <AdminLayout>
       <div data-testid="admin-menu">
@@ -127,6 +244,18 @@ export default function MenuManagement() {
                 data-testid="input-admin-menu-date"
               />
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full sm:w-auto border-[#25D366] text-[#128C7E] hover:bg-[#25D366]/10"
+              onClick={handleShareFullMenuWhatsApp}
+              disabled={isLoading || !products?.length}
+              data-testid="btn-share-menu-whatsapp"
+              title="Share every item for this menu date (with descriptions)"
+            >
+              <SiWhatsapp className="w-4 h-4 mr-2 shrink-0 text-[#25D366]" />
+              Share full menu
+            </Button>
             <Button className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white" onClick={() => handleOpenModal()} data-testid="btn-add-product">
               <Plus className="w-4 h-4 mr-2" /> Add New Item
             </Button>
@@ -142,7 +271,7 @@ export default function MenuManagement() {
             <div className="p-8 text-center text-muted-foreground">Loading...</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[960px] text-sm">
+              <table className="w-full min-w-[1020px] text-sm">
                 <thead className="bg-muted/40">
                   <tr>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground whitespace-nowrap">Item Name</th>
@@ -173,7 +302,18 @@ export default function MenuManagement() {
                         />
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex gap-2">
+                        <div className="flex gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-[#128C7E] hover:text-[#075E54] hover:bg-[#25D366]/15"
+                            onClick={() => handleShareItemWhatsApp(product)}
+                            title="Share this item on WhatsApp (with description)"
+                            data-testid={`btn-whatsapp-product-${product.id}`}
+                          >
+                            <SiWhatsapp className="w-4 h-4 text-[#25D366]" />
+                          </Button>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-primary hover:text-primary/80" onClick={() => handleOpenModal(product)} data-testid={`btn-edit-product-${product.id}`}>
                             <Pencil className="w-3.5 h-3.5" />
                           </Button>

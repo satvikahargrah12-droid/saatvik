@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Search, ShoppingCart, Star, Package } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Search, ShoppingCart, Package } from "lucide-react";
+import { useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
@@ -18,10 +19,23 @@ function formatMenuDateLabel(value: string) {
   return d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short", year: "numeric" });
 }
 
+function parseMenuDateFromSearch(search: string): string | null {
+  const params = new URLSearchParams(search);
+  const d = params.get("menu_date");
+  if (d && /^\d{4}-\d{2}-\d{2}$/.test(d)) return d;
+  return null;
+}
+
 export default function Menu() {
+  const routeSearch = useSearch();
+  const menuDateFromUrl = useMemo(() => parseMenuDateFromSearch(routeSearch), [routeSearch]);
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<number | undefined>();
-  const [selectedMenuDate, setSelectedMenuDate] = useState(todayIsoDate());
+  const [selectedMenuDate, setSelectedMenuDate] = useState(() => menuDateFromUrl ?? todayIsoDate());
+
+  useEffect(() => {
+    if (menuDateFromUrl) setSelectedMenuDate(menuDateFromUrl);
+  }, [menuDateFromUrl]);
   const [availableOnly, setAvailableOnly] = useState(false);
   const { isAuthenticated } = useAuth();
   const [, setLocation] = useLocation();

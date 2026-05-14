@@ -6,14 +6,16 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { OrderItem } from "./orderItem";
+import type { OrderTrackFulfillmentType } from "./orderTrackFulfillmentType";
 
 export interface OrderTrack {
   id: number;
   status: string;
-  fulfillment_type: "DELIVERY" | "TAKE_AWAY" | "DINE_IN";
   order_time: Date;
   delivery_date?: string | null;
   delivery_area_name?: string | null;
+  fulfillment_type: OrderTrackFulfillmentType;
+  delivery_address?: string | null;
   items: OrderItem[];
   total: string;
 }

@@ -5,9 +5,12 @@
  * Saatvik Jain Aahar Gruh - Tiffin Service API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateOrderBodyFulfillmentType } from "./createOrderBodyFulfillmentType";
 
 export interface CreateOrderBody {
-  fulfillment_type: "DELIVERY" | "TAKE_AWAY" | "DINE_IN";
+  fulfillment_type: CreateOrderBodyFulfillmentType;
   delivery_area_id?: number;
   payment_method: string;
+  /** Required when fulfillment_type is DELIVERY (full street address). */
+  delivery_address?: string;
 }

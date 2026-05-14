@@ -570,6 +570,12 @@ export const CreateOrderBody = zod.object({
   fulfillment_type: zod.enum(["DELIVERY", "TAKE_AWAY", "DINE_IN"]),
   delivery_area_id: zod.number().optional(),
   payment_method: zod.string(),
+  delivery_address: zod
+    .string()
+    .optional()
+    .describe(
+      "Required when fulfillment_type is DELIVERY (full street address).",
+    ),
 });
 
 /**
@@ -582,6 +588,7 @@ export const ListMyOrdersResponseItem = zod.object({
   customer_phone: zod.string().nullish(),
   delivery_area_id: zod.number().nullish(),
   delivery_area_name: zod.string().nullish(),
+  delivery_address: zod.string().nullish(),
   delivery_charge: zod.string(),
   subtotal: zod.string(),
   total: zod.string(),
@@ -613,10 +620,11 @@ export const TrackOrderParams = zod.object({
 export const TrackOrderResponse = zod.object({
   id: zod.number(),
   status: zod.string(),
-  fulfillment_type: zod.enum(["DELIVERY", "TAKE_AWAY", "DINE_IN"]),
   order_time: zod.coerce.date(),
   delivery_date: zod.string().nullish(),
   delivery_area_name: zod.string().nullish(),
+  fulfillment_type: zod.enum(["DELIVERY", "TAKE_AWAY", "DINE_IN"]),
+  delivery_address: zod.string().nullish(),
   items: zod.array(
     zod.object({
       id: zod.number(),
@@ -644,6 +652,7 @@ export const AdminListOrdersResponseItem = zod.object({
   customer_phone: zod.string().nullish(),
   delivery_area_id: zod.number().nullish(),
   delivery_area_name: zod.string().nullish(),
+  delivery_address: zod.string().nullish(),
   delivery_charge: zod.string(),
   subtotal: zod.string(),
   total: zod.string(),
@@ -683,6 +692,7 @@ export const UpdateOrderStatusResponse = zod.object({
   customer_phone: zod.string().nullish(),
   delivery_area_id: zod.number().nullish(),
   delivery_area_name: zod.string().nullish(),
+  delivery_address: zod.string().nullish(),
   delivery_charge: zod.string(),
   subtotal: zod.string(),
   total: zod.string(),
@@ -940,6 +950,7 @@ export const GetDashboardStatsResponse = zod.object({
       customer_phone: zod.string().nullish(),
       delivery_area_id: zod.number().nullish(),
       delivery_area_name: zod.string().nullish(),
+      delivery_address: zod.string().nullish(),
       delivery_charge: zod.string(),
       subtotal: zod.string(),
       total: zod.string(),

@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { OrderItem } from "./orderItem";
+import type { OrderWithItemsFulfillmentType } from "./orderWithItemsFulfillmentType";
 
 export interface OrderWithItems {
   id: number;
@@ -14,12 +15,13 @@ export interface OrderWithItems {
   customer_phone?: string | null;
   delivery_area_id?: number | null;
   delivery_area_name?: string | null;
+  delivery_address?: string | null;
   delivery_charge: string;
   subtotal: string;
   total: string;
   status: string;
   payment_method?: string | null;
-  fulfillment_type: "DELIVERY" | "TAKE_AWAY" | "DINE_IN";
+  fulfillment_type: OrderWithItemsFulfillmentType;
   order_time: Date;
   delivery_date?: string | null;
   items: OrderItem[];

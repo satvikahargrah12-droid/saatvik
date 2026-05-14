@@ -22,6 +22,8 @@ export type CheckoutSnapshotV1 = {
   version: 1;
   fulfillment_type: FulfillmentType;
   delivery_area_id: number | null;
+  /** Full delivery address when fulfillment is DELIVERY (stored at checkout start). */
+  delivery_address?: string | null;
   delivery_charge: string;
   subtotal: string;
   total: string;
@@ -49,10 +51,17 @@ async function computeDeliveryDateFromSettings(): Promise<string> {
 }
 
 
+function normalizeDeliveryAddress(raw: string | undefined): string | null {
+  if (raw == null) return null;
+  const t = raw.trim();
+  return t.length > 0 ? t : null;
+}
+
 export async function buildCheckoutSnapshot(
   userId: number,
   fulfillmentType: FulfillmentType,
-  deliveryAreaId?: number,
+  deliveryAreaId: number | undefined,
+  deliveryAddressRaw: string | undefined,
 ): Promise<{ ok: true; snapshot: CheckoutSnapshotV1; amountPaise: number } | { ok: false; error: string; status: number }> {
   const [settings] = await db.select().from(settingsTable).where(eq(settingsTable.status, 1)).limit(1);
   if (settings?.maintenanceMode) {
@@ -60,10 +69,21 @@ export async function buildCheckoutSnapshot(
   }
 
   const isDelivery = fulfillmentType === "DELIVERY";
+  const deliveryAddress = normalizeDeliveryAddress(deliveryAddressRaw);
   let area: typeof deliveryAreasTable.$inferSelect | undefined;
   if (isDelivery) {
     if (deliveryAreaId == null) {
       return { ok: false, error: "delivery_area_id is required for delivery orders", status: 400 };
+    }
+    if (!deliveryAddress || deliveryAddress.length < 5) {
+      return {
+        ok: false,
+        error: "delivery_address is required for delivery orders (at least 5 characters)",
+        status: 400,
+      };
+    }
+    if (deliveryAddress.length > 2000) {
+      return { ok: false, error: "delivery_address must be at most 2000 characters", status: 400 };
     }
     const [activeArea] = await db.select().from(deliveryAreasTable).where(eq(deliveryAreasTable.id, deliveryAreaId)).limit(1);
     if (!activeArea || activeArea.status !== 1) {
@@ -112,6 +132,7 @@ export async function buildCheckoutSnapshot(
     version: 1,
     fulfillment_type: fulfillmentType,
     delivery_area_id: isDelivery ? deliveryAreaId! : null,
+    delivery_address: isDelivery ? deliveryAddress : null,
     delivery_charge: deliveryCharge.toFixed(2),
     subtotal: subtotal.toFixed(2),
     total: total.toFixed(2),
@@ -129,12 +150,13 @@ export async function createRazorpayCheckout(
   userId: number,
   fulfillmentType: FulfillmentType,
   deliveryAreaId: number | undefined,
+  deliveryAddress: string | undefined,
   clientAmountPaise: number | undefined,
 ): Promise<
   | { ok: true; razorpay_order_id: string; amount: number; currency: string }
   | { ok: false; error: string; status: number }
 > {
-  const built = await buildCheckoutSnapshot(userId, fulfillmentType, deliveryAreaId);
+  const built = await buildCheckoutSnapshot(userId, fulfillmentType, deliveryAreaId, deliveryAddress);
   if (!built.ok) {
     return built;
   }
@@ -173,6 +195,7 @@ export async function createRazorpayCheckout(
         user_id: String(userId),
         delivery_area_id: deliveryAreaId != null ? String(deliveryAreaId) : "",
         fulfillment_type: fulfillmentType,
+        delivery_address: built.snapshot.delivery_address?.slice(0, 200) ?? "",
       },
     })) as { id: string };
   } catch (err: unknown) {
@@ -303,6 +326,7 @@ async function finalizeCheckoutFromSnapshotPayment(
       userId,
       fulfillmentType: snapshot.fulfillment_type,
       deliveryAreaId: snapshot.delivery_area_id,
+      deliveryAddress: snapshot.delivery_address?.trim() || null,
       deliveryCharge: snapshot.delivery_charge,
       subtotal: snapshot.subtotal,
       total: snapshot.total,

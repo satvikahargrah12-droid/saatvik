@@ -1538,6 +1538,9 @@ components:
         delivery_area_name:
           type: string
           nullable: true
+        delivery_address:
+          type: string
+          nullable: true
         delivery_charge:
           type: string
         subtotal:
@@ -1592,6 +1595,9 @@ components:
         fulfillment_type:
           type: string
           enum: [DELIVERY, TAKE_AWAY, DINE_IN]
+        delivery_address:
+          type: string
+          nullable: true
         items:
           type: array
           items:
@@ -1616,6 +1622,9 @@ components:
           type: integer
         payment_method:
           type: string
+        delivery_address:
+          type: string
+          description: Required when fulfillment_type is DELIVERY (full street address).
       required:
         - fulfillment_type
         - payment_method

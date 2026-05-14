@@ -149,6 +149,15 @@ export interface OrderItem {
   product_name?: string | null;
 }
 
+export type OrderWithItemsFulfillmentType =
+  (typeof OrderWithItemsFulfillmentType)[keyof typeof OrderWithItemsFulfillmentType];
+
+export const OrderWithItemsFulfillmentType = {
+  DELIVERY: "DELIVERY",
+  TAKE_AWAY: "TAKE_AWAY",
+  DINE_IN: "DINE_IN",
+} as const;
+
 export interface OrderWithItems {
   id: number;
   user_id: number;
@@ -156,32 +165,54 @@ export interface OrderWithItems {
   customer_phone?: string | null;
   delivery_area_id?: number | null;
   delivery_area_name?: string | null;
+  delivery_address?: string | null;
   delivery_charge: string;
   subtotal: string;
   total: string;
   status: string;
   payment_method?: string | null;
-  fulfillment_type: "DELIVERY" | "TAKE_AWAY" | "DINE_IN";
+  fulfillment_type: OrderWithItemsFulfillmentType;
   order_time: string;
   delivery_date?: string | null;
   items: OrderItem[];
 }
+
+export type OrderTrackFulfillmentType =
+  (typeof OrderTrackFulfillmentType)[keyof typeof OrderTrackFulfillmentType];
+
+export const OrderTrackFulfillmentType = {
+  DELIVERY: "DELIVERY",
+  TAKE_AWAY: "TAKE_AWAY",
+  DINE_IN: "DINE_IN",
+} as const;
 
 export interface OrderTrack {
   id: number;
   status: string;
-  fulfillment_type: "DELIVERY" | "TAKE_AWAY" | "DINE_IN";
   order_time: string;
   delivery_date?: string | null;
   delivery_area_name?: string | null;
+  fulfillment_type: OrderTrackFulfillmentType;
+  delivery_address?: string | null;
   items: OrderItem[];
   total: string;
 }
 
+export type CreateOrderBodyFulfillmentType =
+  (typeof CreateOrderBodyFulfillmentType)[keyof typeof CreateOrderBodyFulfillmentType];
+
+export const CreateOrderBodyFulfillmentType = {
+  DELIVERY: "DELIVERY",
+  TAKE_AWAY: "TAKE_AWAY",
+  DINE_IN: "DINE_IN",
+} as const;
+
 export interface CreateOrderBody {
-  fulfillment_type: "DELIVERY" | "TAKE_AWAY" | "DINE_IN";
+  fulfillment_type: CreateOrderBodyFulfillmentType;
   delivery_area_id?: number;
   payment_method: string;
+  /** Required when fulfillment_type is DELIVERY (full street address). */
+  delivery_address?: string;
 }
 
 export interface UpdateOrderStatusBody {

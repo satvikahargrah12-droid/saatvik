@@ -148,6 +148,13 @@ export default function TrackOrder() {
                 </p>
               </div>
             )}
+
+            {order.fulfillment_type === "DELIVERY" && order.delivery_address && (
+              <div className="bg-card border border-border rounded-2xl p-6">
+                <h3 className="font-semibold text-foreground mb-2">Delivery address</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{order.delivery_address}</p>
+              </div>
+            )}
           </div>
         )}
       </div>

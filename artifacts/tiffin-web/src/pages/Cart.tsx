@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { ShoppingCart, Trash2, Plus, Minus, CreditCard, Loader2, ChevronRight, ChevronLeft, CheckCircle2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Navbar } from "@/components/Navbar";
 import {
   useGetCart,
@@ -55,6 +56,7 @@ export default function Cart() {
   const { isAuthenticated, user, token } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedArea, setSelectedArea] = useState<string>("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
   const [fulfillmentType, setFulfillmentType] = useState<FulfillmentType>("DELIVERY");
   const [paymentMethod, setPaymentMethod] = useState("COD");
   const [checkoutStep, setCheckoutStep] = useState<CheckoutStep>(1);
@@ -80,6 +82,7 @@ export default function Cart() {
   });
 
   const isDeliveryOrder = fulfillmentType === "DELIVERY";
+  const deliveryAddressOk = !isDeliveryOrder || deliveryAddress.trim().length >= 5;
   const selectedAreaData = areas?.find((a) => a.id.toString() === selectedArea);
   const deliveryCharge = isDeliveryOrder && selectedAreaData ? parseFloat(selectedAreaData.delivery_charge as string) : 0;
   const subtotal = parseFloat(cart?.subtotal || "0");
@@ -234,7 +237,7 @@ export default function Cart() {
 
   /** Razorpay: server creates Razorpay order from cart; app order is created only after /payment/verify succeeds. */
   async function handleRazorpayPayNow() {
-    if ((isDeliveryOrder && !selectedArea) || !token) return;
+    if ((isDeliveryOrder && (!selectedArea || !deliveryAddressOk)) || !token) return;
     setPaymentUiError(null);
     setIsProcessingPayment(true);
     try {
@@ -243,6 +246,7 @@ export default function Cart() {
         {
           fulfillment_type: fulfillmentType,
           delivery_area_id: isDeliveryOrder ? parseInt(selectedArea, 10) : undefined,
+          delivery_address: isDeliveryOrder ? deliveryAddress.trim() : undefined,
           amount: amountPaise,
         },
         token,
@@ -261,19 +265,20 @@ export default function Cart() {
   }
 
   function handleCodCheckout() {
-    if (isDeliveryOrder && !selectedArea) return;
+    if (isDeliveryOrder && (!selectedArea || !deliveryAddressOk)) return;
     setIsProcessingPayment(true);
     createOrder.mutate({
       data: {
         fulfillment_type: fulfillmentType,
         delivery_area_id: isDeliveryOrder ? parseInt(selectedArea, 10) : undefined,
+        delivery_address: isDeliveryOrder ? deliveryAddress.trim() : undefined,
         payment_method: paymentMethod,
       },
     });
   }
 
   function goNext() {
-    if (checkoutStep === 1 && isDeliveryOrder && !selectedArea) return;
+    if (checkoutStep === 1 && isDeliveryOrder && (!selectedArea || !deliveryAddressOk)) return;
     setCheckoutStep((s) => (s < 3 ? ((s + 1) as CheckoutStep) : s));
   }
   function goBack() {
@@ -408,7 +413,13 @@ export default function Cart() {
                 <div>
                   <h2 className="font-semibold text-foreground mb-3">Order type</h2>
                   <p className="text-sm text-muted-foreground mb-3">Choose how you want to receive the order.</p>
-                  <Select value={fulfillmentType} onValueChange={(value: FulfillmentType) => setFulfillmentType(value)}>
+                  <Select
+                    value={fulfillmentType}
+                    onValueChange={(value: FulfillmentType) => {
+                      setFulfillmentType(value);
+                      if (value !== "DELIVERY") setDeliveryAddress("");
+                    }}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select order type..." />
                     </SelectTrigger>
@@ -433,6 +444,23 @@ export default function Cart() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <div className="mt-4">
+                        <label htmlFor="delivery-address" className="text-sm font-medium text-foreground mb-2 block">
+                          Full delivery address
+                        </label>
+                        <Textarea
+                          id="delivery-address"
+                          placeholder="House / flat no., street, landmark, pincode…"
+                          value={deliveryAddress}
+                          onChange={(e) => setDeliveryAddress(e.target.value)}
+                          rows={4}
+                          className="resize-y min-h-[96px]"
+                          data-testid="input-delivery-address"
+                        />
+                        <p className="text-xs text-muted-foreground mt-1.5">
+                          Required for delivery (at least 5 characters). Our team uses this to reach you.
+                        </p>
+                      </div>
                     </div>
                   ) : (
                     <p className="mt-4 text-sm text-muted-foreground">
@@ -480,10 +508,7 @@ export default function Cart() {
               {checkoutStep === 3 && (
                 <div>
                   <h2 className="font-semibold text-foreground mb-3">Payment</h2>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    Online checkout uses Razorpay (test card 4111 1111 1111 1111, OTP 123456). Your card details never
-                    touch our servers.
-                  </p>
+                  
                   <div className="mb-4">
                     <label className="text-sm text-muted-foreground mb-1.5 block">Payment method</label>
                     <Select value={paymentMethod} onValueChange={setPaymentMethod}>
@@ -537,7 +562,7 @@ export default function Cart() {
                     type="button"
                     className="flex-1 bg-primary text-white"
                     onClick={goNext}
-                    disabled={checkoutStep === 1 && isDeliveryOrder && !selectedArea}
+                    disabled={checkoutStep === 1 && isDeliveryOrder && (!selectedArea || !deliveryAddressOk)}
                   >
                     Next
                     <ChevronRight className="w-4 h-4 ml-1" />
@@ -546,7 +571,7 @@ export default function Cart() {
                   <Button
                     type="button"
                     className="flex-1 bg-primary text-white"
-                    disabled={(isDeliveryOrder && !selectedArea) || isCheckoutBusy}
+                    disabled={(isDeliveryOrder && (!selectedArea || !deliveryAddressOk)) || isCheckoutBusy}
                     onClick={handleRazorpayPayNow}
                     data-testid="btn-checkout"
                   >
@@ -566,7 +591,7 @@ export default function Cart() {
                   <Button
                     type="button"
                     className="flex-1 bg-primary text-white"
-                    disabled={(isDeliveryOrder && !selectedArea) || isCheckoutBusy || createOrder.isPending}
+                    disabled={(isDeliveryOrder && (!selectedArea || !deliveryAddressOk)) || isCheckoutBusy || createOrder.isPending}
                     onClick={handleCodCheckout}
                     data-testid="btn-checkout"
                   >

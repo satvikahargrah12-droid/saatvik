@@ -8,11 +8,12 @@ import type { FulfillmentType } from "../services/paymentService";
 
 /**
  * POST /api/payment/create-order
- * Body: { delivery_area_id: number, amount?: number } — amount is total in paise (optional cross-check).
+ * Body: { delivery_area_id, delivery_address?, amount?, fulfillment_type? } — amount is total in paise (optional cross-check).
  */
 export async function postCreateOrder(req: AuthRequest, res: Response): Promise<void> {
-  const { delivery_area_id, amount, fulfillment_type } = req.body as {
+  const { delivery_area_id, delivery_address, amount, fulfillment_type } = req.body as {
     delivery_area_id?: number;
+    delivery_address?: string;
     amount?: number;
     fulfillment_type?: FulfillmentType;
   };
@@ -28,7 +29,13 @@ export async function postCreateOrder(req: AuthRequest, res: Response): Promise<
     return;
   }
 
-  const result = await createRazorpayCheckout(req.user!.id, selectedFulfillmentType, delivery_area_id, amount);
+  const result = await createRazorpayCheckout(
+    req.user!.id,
+    selectedFulfillmentType,
+    delivery_area_id,
+    delivery_address,
+    amount,
+  );
 
   if (!result.ok) {
     // `from: "api"` helps tell this JSON apart from an empty/HTML 502 from the Vite proxy when the API is unreachable.

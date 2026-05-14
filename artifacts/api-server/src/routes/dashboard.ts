@@ -31,6 +31,7 @@ router.get("/admin/dashboard", authenticate, requireAdmin, async (_req, res): Pr
       payment_method: ordersTable.paymentMethod,
       order_time: ordersTable.orderTime,
       delivery_date: ordersTable.deliveryDate,
+      delivery_address: ordersTable.deliveryAddress,
     })
     .from(ordersTable)
     .leftJoin(usersTable, eq(ordersTable.userId, usersTable.id))

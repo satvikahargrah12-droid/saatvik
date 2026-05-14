@@ -68,12 +68,13 @@ export default function Orders() {
             <div className="p-8 text-center text-muted-foreground">Loading orders...</div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] text-sm">
+              <table className="w-full min-w-[1100px] text-sm">
                 <thead className="bg-muted/40">
                   <tr>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground whitespace-nowrap">Order ID</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground whitespace-nowrap">Customer</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground whitespace-nowrap">Area</th>
+                    <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground min-w-[12rem] max-w-xs">Delivery address</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground whitespace-nowrap">Items</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground whitespace-nowrap">Payment</th>
                     <th className="text-left px-4 py-3 text-xs font-medium text-muted-foreground whitespace-nowrap">Total</th>
@@ -92,6 +93,11 @@ export default function Orders() {
                         <div className="text-xs text-muted-foreground">{order.customer_phone || ""}</div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{order.delivery_area_name || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground align-top max-w-xs">
+                        <span className="whitespace-pre-wrap break-words line-clamp-4" title={order.delivery_address || undefined}>
+                          {order.fulfillment_type === "DELIVERY" ? order.delivery_address || "—" : "—"}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
                         {order.items.slice(0, 2).map((item: any) => `${item.quantity}x ${item.product_name}`).join(", ")}
                         {order.items.length > 2 && ` +${order.items.length - 2} more`}

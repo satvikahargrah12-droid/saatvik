@@ -7,6 +7,21 @@ import { authenticate, requireAdmin, type AuthRequest } from "../middlewares/aut
 const router: IRouter = Router();
 type FulfillmentType = "DELIVERY" | "TAKE_AWAY" | "DINE_IN";
 
+function parseDeliveryAddressForOrder(isDelivery: boolean, raw: unknown): { ok: true; value: string | null } | { ok: false; error: string } {
+  if (!isDelivery) return { ok: true, value: null };
+  if (raw == null || typeof raw !== "string") {
+    return { ok: false, error: "delivery_address is required for delivery orders" };
+  }
+  const t = raw.trim();
+  if (t.length < 5) {
+    return { ok: false, error: "delivery_address must be at least 5 characters for delivery orders" };
+  }
+  if (t.length > 2000) {
+    return { ok: false, error: "delivery_address must be at most 2000 characters" };
+  }
+  return { ok: true, value: t };
+}
+
 async function buildOrderResponse(order: any) {
   const items = await db
     .select({
@@ -68,6 +83,12 @@ router.post("/orders", authenticate, async (req: AuthRequest, res): Promise<void
     area = activeArea;
   }
 
+  const addrResult = parseDeliveryAddressForOrder(isDelivery, parsed.data.delivery_address);
+  if (!addrResult.ok) {
+    res.status(400).json({ error: addrResult.error });
+    return;
+  }
+
   // Get cart items
   const [cart] = await db.select().from(cartTable).where(and(eq(cartTable.userId, req.user!.id), eq(cartTable.status, 1))).limit(1);
   if (!cart) {
@@ -103,6 +124,7 @@ router.post("/orders", authenticate, async (req: AuthRequest, res): Promise<void
     userId: req.user!.id,
     fulfillmentType,
     deliveryAreaId: isDelivery ? parsed.data.delivery_area_id! : null,
+    deliveryAddress: addrResult.value,
     deliveryCharge: deliveryCharge.toFixed(2),
     subtotal: subtotal.toFixed(2),
     total: total.toFixed(2),
@@ -152,6 +174,7 @@ async function getOrderWithMeta(orderId: number) {
       razorpay_order_id: ordersTable.razorpayOrderId,
       order_time: ordersTable.orderTime,
       delivery_date: ordersTable.deliveryDate,
+      delivery_address: ordersTable.deliveryAddress,
     })
     .from(ordersTable)
     .leftJoin(usersTable, eq(ordersTable.userId, usersTable.id))
@@ -181,6 +204,7 @@ router.get("/orders/my", authenticate, async (req: AuthRequest, res): Promise<vo
       razorpay_order_id: ordersTable.razorpayOrderId,
       order_time: ordersTable.orderTime,
       delivery_date: ordersTable.deliveryDate,
+      delivery_address: ordersTable.deliveryAddress,
     })
     .from(ordersTable)
     .leftJoin(usersTable, eq(ordersTable.userId, usersTable.id))
@@ -207,6 +231,7 @@ router.get("/orders/track/:orderId", async (req, res): Promise<void> => {
     fulfillment_type: order.fulfillment_type,
     items: order.items,
     total: order.total,
+    delivery_address: order.delivery_address,
   });
 });
 
@@ -231,6 +256,7 @@ router.get("/admin/orders", authenticate, requireAdmin, async (req, res): Promis
       razorpay_order_id: ordersTable.razorpayOrderId,
       order_time: ordersTable.orderTime,
       delivery_date: ordersTable.deliveryDate,
+      delivery_address: ordersTable.deliveryAddress,
     })
     .from(ordersTable)
     .leftJoin(usersTable, eq(ordersTable.userId, usersTable.id))

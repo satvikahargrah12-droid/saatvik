@@ -1,4 +1,4 @@
-import { pgTable, serial, integer, decimal, varchar, timestamp, date } from "drizzle-orm/pg-core";
+import { pgTable, serial, integer, decimal, varchar, timestamp, date, text } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 import { usersTable } from "./users";
@@ -11,6 +11,8 @@ export const ordersTable = pgTable("orders", {
   userId: integer("user_id").references(() => usersTable.id),
   fulfillmentType: varchar("fulfillment_type", { length: 20 }).notNull().default("DELIVERY"),
   deliveryAreaId: integer("delivery_area_id").references(() => deliveryAreasTable.id),
+  /** Full street / landmark address for delivery (null for take-away or dine-in). */
+  deliveryAddress: text("delivery_address"),
   deliveryCharge: decimal("delivery_charge", { precision: 10, scale: 2 }).notNull().default("0"),
   subtotal: decimal("subtotal", { precision: 10, scale: 2 }).notNull().default("0"),
   total: decimal("total", { precision: 10, scale: 2 }).notNull().default("0"),
